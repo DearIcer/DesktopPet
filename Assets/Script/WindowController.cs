@@ -338,15 +338,8 @@ public class WindowController : MonoBehaviour
 
         if (_winCore.ObserveWindowStyleChanged(out var type))
         {
-            // // モニタへのフィット指定がある状態で最大化解除された場合
-            // if (shouldFitMonitor && !uniWinCore.GetZoomed())
-            // {
-            //     //StartCoroutine("ForceZoomed");    // 時間差で最大化を強制
-            //     //SetZoomed(true);        // 強制的に最大化　←必ずしも働かない
-            //     //shouldFitMonitor = false;    // フィットを無効化
-            // }
             if (_shouldFitMonitor) StartCoroutine("ForceZoomed"); // 時間差で最大化を強制
-                
+            
             OnStateChanged?.Invoke((WindowStateEventType)type);
         }
     }
@@ -355,8 +348,6 @@ public class WindowController : MonoBehaviour
         while (Application.isPlaying)
         {
             yield return new WaitForEndOfFrame();
-
-            // Windowsの場合、単色での透過ならばヒットテストはOSに任せるため、常にヒット
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
             if (transparentType == TransparentType.ColorKey)
             {
