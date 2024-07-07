@@ -14,14 +14,6 @@ public class WindowMoveHandle : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     [Tooltip("Disable drag-move when the window is zoomed (maximized).")]
     public bool disableOnZoomed = true;
 
-    /// <summary>
-    /// 如果正在拖动则为 true
-    /// </summary>
-    public bool IsDragging
-    {
-        get { return _isDragging; }
-    }
-
     private bool _isDragging = false;
 
     /// <summary>
@@ -37,7 +29,7 @@ public class WindowMoveHandle : MonoBehaviour, IDragHandler, IBeginDragHandler, 
     /// </summary>
     private bool IsZoomed
     {
-        get { return (_windowController && (_windowController.shouldFitMonitor || _windowController.isZoomed)); }
+        get { return (_windowController && (_windowController.ShouldFitMonitor || _windowController.IsZoomed)); }
     }
 
     /// <summary>
@@ -85,7 +77,7 @@ public class WindowMoveHandle : MonoBehaviour, IDragHandler, IBeginDragHandler, 
             // 在拖动期间禁用碰撞检测
             _isHitTestEnabled = _windowController.isHitTestEnabled;
             _windowController.isHitTestEnabled = false;
-            _windowController.isClickThrough = false;
+            _windowController.IsClickThrough = false;
         }
 
         _isDragging = true;
@@ -159,7 +151,7 @@ public class WindowMoveHandle : MonoBehaviour, IDragHandler, IBeginDragHandler, 
 #else
         // 在Windows上，为了支持触摸操作，使用 eventData.position
         // 将窗口移动到与起始位置相匹配的屏幕位置
-        _windowController.windowPosition += eventData.position - _dragStartedPosition;
+        _windowController.WindowPosition += eventData.position - _dragStartedPosition;
 #endif
     }
 }
