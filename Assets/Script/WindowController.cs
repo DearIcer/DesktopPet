@@ -14,17 +14,16 @@ public class WindowController : MonoBehaviour
         Alpha = 1,
         ColorKey = 2,
     }
-    
+
     public enum HitTestType : int
     {
         None = 0,
         Opacity = 1,
         Raycast = 2,
     }
-    
-    [Tooltip("Force windowed on startup")]
-    public bool forceWindowed = false;
-    
+
+    [Tooltip("Force windowed on startup")] public bool forceWindowed = false;
+
     /// <summary>
     /// Identifies the type of <see cref="OnStateChanged">OnStateChanged</see> event when it occurs
     /// </summary>
@@ -43,71 +42,99 @@ public class WindowController : MonoBehaviour
         WallpaperModeEnabled = 64 + 1 + 8,
         WallpaperModeDisabled = 64 + 1,
     };
-    
+
     [Tooltip("Main camera is used if None")]
     public Camera currentCamera;
-    
-    [Header("Advanced settings")]
-    [Tooltip("Change camera background when the window is transparent")]
+
+    [Header("Advanced settings")] [Tooltip("Change camera background when the window is transparent")]
     public bool autoSwitchCameraBackground = true;
-    
-    [Header("For Windows only")]
-    [Tooltip("Select the method. *Only available on Windows")]
+
+    [Header("For Windows only")] [Tooltip("Select the method. *Only available on Windows")]
     public TransparentType transparentType = TransparentType.Alpha;
-    
+
     [Tooltip("Will be used the next time the window becomes transparent")]
     public Color32 keyColor = new Color32(0x01, 0x00, 0x01, 0x00);
-    
+
     private CameraClearFlags _originalCameraClearFlags;
-    
+
     private Color _originalCameraBackground;
-    
+
     private float raycastMaxDepth = 100.0f;
-    
-    [Tooltip("Select the method")]
-    public HitTestType hitTestType = HitTestType.Opacity;
-    
-    [Header("State")]
-    [SerializeField, ReadOnly, Tooltip("Is the mouse pointer on an opaque pixel? (Read only)")]
+
+    [Tooltip("Select the method")] public HitTestType hitTestType = HitTestType.Opacity;
+
+    [Header("State")] [SerializeField, ReadOnly, Tooltip("Is the mouse pointer on an opaque pixel? (Read only)")]
     private bool onObject = true;
 
     [SerializeField, EditableProperty, Tooltip("Check to set bottommost on startup")]
     private bool _isBottommost = false;
-    
+
+
     /// <summary>
     /// Low level class
     /// </summary>
     private WinCore _winCore = null;
-    
+
     public bool isHitTestEnabled = true;
-    
+
     private Rect originalWindowRectangle;
-    
+
+    /// <summary>
+    /// ウィンドウ座標を取得・設定
+    /// </summary>
+    public Vector2 windowPosition
+    {
+        get { return (_winCore != null ? _winCore.GetWindowPosition() : Vector2.zero); }
+        set { _winCore?.SetWindowPosition(value); }
+    }
+
+    /// <summary>
+    /// ウィンドウ座標を取得・設定
+    /// </summary>
+    public Vector2 windowSize
+    {
+        get { return (_winCore != null ? _winCore.GetWindowSize() : Vector2.zero); }
+        set { _winCore?.SetWindowSize(value); }
+    }
+
+    public bool isClickThrough
+    {
+        get { return _isClickThrough; }
+        set { SetClickThrough(value); }
+    }
+
+    private bool _isClickThrough = false;
+
     /// <summary>
     /// Set editable a bool property
     /// </summary>
     [System.AttributeUsage(System.AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-    public class EditablePropertyAttribute : UnityEngine.PropertyAttribute { }
-    
+    public class EditablePropertyAttribute : UnityEngine.PropertyAttribute
+    {
+    }
+
     private PointerEventData pointerEventData;
     public event OnMonitorChangedDelegate OnMonitorChanged;
+
     public delegate void OnMonitorChangedDelegate();
-    
+
     public bool shouldFitMonitor
     {
         get { return _shouldFitMonitor; }
         set { FitToMonitor(value, _monitorToFit); }
     }
+
     [SerializeField, EditableProperty, Tooltip("Check to fit the window to the monitor")]
     private bool _shouldFitMonitor = false;
-    
+
     public int monitorToFit
     {
         get { return _monitorToFit; }
         set { FitToMonitor(_shouldFitMonitor, value); }
     }
+
     private int _monitorToFit = 0;
-    
+
     /// <summary>
     /// Is this window topmost
     /// </summary>
@@ -116,42 +143,56 @@ public class WindowController : MonoBehaviour
         get { return ((_winCore == null) ? isTopmost : isTopmost = _winCore.IsTopmost); }
         set { SetTopmost(value); }
     }
+
     [FormerlySerializedAs("_isTopmost")] [SerializeField, EditableProperty, Tooltip("Check to set topmost on startup")]
     private bool isTopmost = false;
-    
+
     public bool IsTransparent
     {
         get { return isTransparent; }
         set { SetTransparent(value); }
     }
+
     public static WindowController current => _current ? _current : FindOrCreateInstance();
     private static WindowController _current;
-    
-    [FormerlySerializedAs("_isTransparent")] [SerializeField, EditableProperty, Tooltip("Check to set transparent on startup")]
+
+    [FormerlySerializedAs("_isTransparent")]
+    [SerializeField, EditableProperty, Tooltip("Check to set transparent on startup")]
     private bool isTransparent = false;
-    
-    private bool _isClickThrough = false;
-    
+
+
     private int hitTestLayerMask;
-    
+
+    /// <summary>
+    /// Is this window minimized
+    /// </summary>
+    public bool isZoomed
+    {
+        get { return ((_winCore == null) ? _isZoomed : _isZoomed = _winCore.GetZoomed()); }
+        set { SetZoomed(value); }
+    }
+
+    [SerializeField, EditableProperty, Tooltip("Check to set zoomed on startup")]
+    private bool _isZoomed = false;
+
     public float alphaValue
     {
         get { return _alphaValue; }
         set { SetAlphaValue(value); }
     }
-    
+
     [SerializeField, EditableProperty, Tooltip("Window alpha"), Range(0f, 1f)]
     private float _alphaValue = 1.0f;
-    
+
     private Texture2D colorPickerTexture = null;
-    
+
     [SerializeField, ReadOnly, Tooltip("Pixel color under the mouse pointer. (Read only)")]
     public Color pickedColor;
-    
+
     [Tooltip("Available on the hit test type is Opacity"), RangeAttribute(0f, 1f)]
     public float opacityThreshold = 0.1f;
 
-    
+
     /// <summary>
     /// Set window alpha
     /// </summary>
@@ -161,10 +202,11 @@ public class WindowController : MonoBehaviour
         _alphaValue = alpha;
         _winCore?.SetAlphaValue(_alphaValue);
     }
-    
+
     public event OnStateChangedDelegate OnStateChanged;
+
     public delegate void OnStateChangedDelegate(WindowStateEventType type);
-    
+
     /// <summary>
     /// Fit to the specified monitor
     /// </summary>
@@ -196,7 +238,7 @@ public class WindowController : MonoBehaviour
                     UpdateMonitorFitting();
                 }
             }
-        } 
+        }
         else
         {
             if (_shouldFitMonitor)
@@ -217,7 +259,7 @@ public class WindowController : MonoBehaviour
 
         return true;
     }
-    
+
     /// <summary>
     /// Fit to specified monitor
     /// </summary>
@@ -232,6 +274,7 @@ public class WindowController : MonoBehaviour
         {
             targetMonitorIndex = 0;
         }
+
         if (monitors <= targetMonitorIndex)
         {
             targetMonitorIndex = monitors - 1;
@@ -242,6 +285,7 @@ public class WindowController : MonoBehaviour
             _winCore.FitToMonitor(targetMonitorIndex);
         }
     }
+
     void Awake()
     {
         // シングルトンとする。既にインスタンスがあれば自分を破棄
@@ -280,12 +324,11 @@ public class WindowController : MonoBehaviour
         {
             _originalCameraClearFlags = currentCamera.clearFlags;
             _originalCameraBackground = currentCamera.backgroundColor;
-
         }
-            
+
         // マウスイベント情報
         pointerEventData = new PointerEventData(EventSystem.current);
-            
+
         // Ignore Raycast 以外を有効とするマスク
         hitTestLayerMask = ~LayerMask.GetMask("Ignore Raycast");
 
@@ -295,6 +338,7 @@ public class WindowController : MonoBehaviour
         // ウィンドウ制御用のインスタンス作成
         _winCore = new WinCore();
     }
+
     void Start()
     {
         // マウスカーソル直下の色を取得するコルーチンを開始
@@ -307,7 +351,7 @@ public class WindowController : MonoBehaviour
         OnMonitorChanged += UpdateMonitorFitting;
         UpdateMonitorFitting();
     }
-    
+
     void Update()
     {
         // 如果未成功获取自身窗口或窗口未激活，则尝试重新获取
@@ -320,7 +364,7 @@ public class WindowController : MonoBehaviour
             // 更新窗口核心状态
             _winCore.Update();
         }
-    
+
         // 处理事件
         UpdateEvents();
 
@@ -334,15 +378,16 @@ public class WindowController : MonoBehaviour
     private void UpdateEvents()
     {
         if (_winCore == null) return;
-        
+
 
         if (_winCore.ObserveWindowStyleChanged(out var type))
         {
             if (_shouldFitMonitor) StartCoroutine("ForceZoomed"); // 時間差で最大化を強制
-            
+
             OnStateChanged?.Invoke((WindowStateEventType)type);
         }
     }
+
     private IEnumerator HitTestCoroutine()
     {
         while (Application.isPlaying)
@@ -369,13 +414,14 @@ public class WindowController : MonoBehaviour
                 onObject = true;
             }
         }
+
         yield return null;
     }
-    
+
     private void HitTestByRaycast()
     {
         var position = Input.mousePosition;
-            
+
         // // uGUIの上か否かを判定
         var raycastResults = new List<RaycastResult>();
         pointerEventData.position = position;
@@ -409,7 +455,8 @@ public class WindowController : MonoBehaviour
                 onObject = true;
                 return;
             }
-        } else
+        }
+        else
         {
             // カメラが有効でなければメインカメラを取得
             currentCamera = Camera.main;
@@ -418,7 +465,7 @@ public class WindowController : MonoBehaviour
         // いずれもヒットしなければオブジェクト上ではないと判断
         onObject = false;
     }
-    
+
     private void HitTestByOpaquePixel()
     {
         Vector2 mousePos = Input.mousePosition;
@@ -436,7 +483,7 @@ public class WindowController : MonoBehaviour
             onObject = false;
         }
     }
-    
+
     private bool GetOnOpaquePixel(Vector2 mousePos)
     {
         float w = Screen.width;
@@ -459,14 +506,14 @@ public class WindowController : MonoBehaviour
         if (transparentType == TransparentType.ColorKey) return true;
 
         // 指定座標の描画結果を見て判断
-        try   // WaitForEndOfFrame のタイミングで実行すればtryは無くても大丈夫な気はする
+        try // WaitForEndOfFrame のタイミングで実行すればtryは無くても大丈夫な気はする
         {
             // Reference http://tsubakit1.hateblo.jp/entry/20131203/1386000440
             colorPickerTexture.ReadPixels(new Rect(mousePos, Vector2.one), 0, 0);
             Color color = colorPickerTexture.GetPixels32()[0];
             pickedColor = color;
 
-            return (color.a >= opacityThreshold);  // αがしきい値以上ならば不透過とする
+            return (color.a >= opacityThreshold); // αがしきい値以上ならば不透過とする
         }
         catch (System.Exception ex)
         {
@@ -474,6 +521,7 @@ public class WindowController : MonoBehaviour
             return false;
         }
     }
+
     void StoreOriginalWindowRectangle()
     {
         if (_winCore != null)
@@ -483,7 +531,7 @@ public class WindowController : MonoBehaviour
             originalWindowRectangle = new Rect(pos, size);
         }
     }
-    
+
     void SetCameraBackground(bool transparent)
     {
         // todo:首先检查currentCamera是否存在以及是否允许自动切换相机背景。如果这两个条件中的任何一个不满足，则方法直接返回，不做任何操作
@@ -508,14 +556,14 @@ public class WindowController : MonoBehaviour
             currentCamera.backgroundColor = _originalCameraBackground;
         }
     }
-    
+
     private void SetTopmost(bool topmost)
     {
         if (_winCore == null) return;
         _winCore.EnableTopmost(topmost);
         isTopmost = _winCore.IsTopmost;
     }
-    
+
     /// <summary>
     /// todo: 确保在更换相机时能恢复或应用正确的背景设置
     /// </summary>
@@ -528,7 +576,7 @@ public class WindowController : MonoBehaviour
         }
 
         currentCamera = newCamera;
-        
+
         if (currentCamera)
         {
             _originalCameraClearFlags = currentCamera.clearFlags;
@@ -537,7 +585,15 @@ public class WindowController : MonoBehaviour
             SetCameraBackground(isTransparent);
         }
     }
-    
+
+    private void SetZoomed(bool zoomed)
+    {
+        if (_winCore == null) return;
+
+        _winCore.SetZoomed(zoomed);
+        _isZoomed = _winCore.GetZoomed();
+    }
+
     /// <summary>
     /// todo: 切换透明状态
     /// </summary>
@@ -554,12 +610,12 @@ public class WindowController : MonoBehaviour
 #endif
         UpdateClickThrough();
     }
-    
+
     void UpdateClickThrough()
     {
         // 如果不启用自动命中测试或命中测试类型为无，则结束
         if (!isHitTestEnabled || hitTestType == HitTestType.None) return;
-    
+
         // 如果鼠标光标不可见，则当作点击在透明像素上处理
         bool isHit = onObject;
 
@@ -580,19 +636,19 @@ public class WindowController : MonoBehaviour
             }
         }
     }
-    
+
     void SetClickThrough(bool isThrough)
     {
         _winCore?.EnableClickThrough(isThrough);
         _isClickThrough = isThrough;
     }
-    
+
     private static WindowController FindOrCreateInstance()
     {
         var instance = FindObjectOfType<WindowController>();
         return instance;
     }
-    
+
     /// <summary>
     /// 如果自身的窗口句柄不确定，则重新搜索
     /// </summary>
@@ -623,6 +679,7 @@ public class WindowController : MonoBehaviour
                 {
                     SetTopmost(isTopmost);
                 }
+
                 SetClickThrough(_isClickThrough);
 
                 // 在获取窗口时，执行类似于显示器变更的处理
@@ -638,7 +695,7 @@ public class WindowController : MonoBehaviour
 #endif
         }
     }
-    
+
     private void SetBottommost(bool bottommost)
     {
         if (_winCore == null) return;
@@ -647,5 +704,4 @@ public class WindowController : MonoBehaviour
         _isBottommost = _winCore.IsBottommost;
         isTopmost = _winCore.IsTopmost;
     }
-
 }
