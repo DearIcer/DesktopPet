@@ -191,21 +191,7 @@ public class WindowController : MonoBehaviour
     /// </summary>
     private int _hitTestLayerMask;
 
-    /// <summary>
-    /// 获取或设置窗口是否最大化
-    /// </summary>
-    public bool IsZoomed
-    {
-        get { return ((_winCore == null) ? isZoomed : isZoomed = _winCore.GetZoomed()); }
-        set { SetZoomed(value); }
-    }
-
-    /// <summary>
-    /// 是否最大化的私有字段，在启动时可编辑
-    /// </summary>
-    [FormerlySerializedAs("_isZoomed")] [SerializeField, EditableProperty, Tooltip("勾选以在启动时设置为最大化")]
-    private bool isZoomed = false;
-
+    
     /// <summary>
     /// 窗口的 Alpha 值，在 0 到 1 的范围内
     /// </summary>
@@ -618,15 +604,7 @@ public class WindowController : MonoBehaviour
             SetCameraBackground(isTransparent); // 根据当前的透明状态设置相机背景
         }
     }
-
-    private void SetZoomed(bool zoomed)
-    {
-        if (_winCore == null) return; // 如果窗口核心对象不存在则退出
-
-        _winCore.SetZoomed(zoomed); // 设置窗口的缩放状态
-        isZoomed = _winCore.GetZoomed(); // 更新内部的缩放状态变量
-    }
-
+    
     /// <summary>
     /// 切换透明状态
     /// </summary>

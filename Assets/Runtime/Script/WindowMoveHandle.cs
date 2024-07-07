@@ -7,31 +7,14 @@ public class WindowMoveHandle : MonoBehaviour, IDragHandler, IBeginDragHandler, 
 {
     private WindowController _windowController;
 
-
-    /// <summary>
-    /// 当窗口处于最大化状态时是否禁用移动
-    /// </summary>
-    [Tooltip("Disable drag-move when the window is zoomed (maximized).")]
-    public bool disableOnZoomed = true;
-
     private bool _isDragging = false;
 
     /// <summary>
     /// 是否允许进行拖动
     /// </summary>
-    private bool IsEnabled
-    {
-        get { return enabled && (!disableOnZoomed || !IsZoomed); }
-    }
+    private bool IsEnabled = true;
 
-    /// <summary>
-    /// 是否适应屏幕或已最大化
-    /// </summary>
-    private bool IsZoomed
-    {
-        get { return (_windowController && (_windowController.ShouldFitMonitor || _windowController.IsZoomed)); }
-    }
-
+    
     /// <summary>
     /// 记录拖动前自动碰撞检测是否启用
     /// </summary>
