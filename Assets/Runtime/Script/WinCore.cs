@@ -28,7 +28,7 @@ internal class WinCore : IDisposable
         None = 0,
         StyleChanged = 1,
         Resized = 2,
-        
+
         TopMostEnabled = 16 + 1 + 8,
         TopMostDisabled = 16 + 1,
         BottomMostEnabled = 32 + 1 + 8,
@@ -279,11 +279,12 @@ internal class WinCore : IDisposable
 
 
     #region Constructor or destructor
-    
+
     public WinCore()
     {
         IsActive = false;
     }
+
     ~WinCore()
     {
         Dispose();
@@ -342,10 +343,10 @@ internal class WinCore : IDisposable
     }
 
     /// <summary>
-    /// ダブルクオーテーション囲み、LF（またはnull）区切りの文字列を配列に直して返す
+    /// 将双引号包围且以换行符（LF）或空字符(null)分隔的字符串转换为数组并返回。
     /// </summary>
-    /// <param name="text"></param>
-    /// <returns></returns>
+    /// <param name="text">待解析的文本字符串。</param>
+    /// <returns>解析后的字符串数组。</returns>
     internal static string[] ParsePaths(string text)
     {
         System.Collections.Generic.List<string> list = new System.Collections.Generic.List<string>();
@@ -362,39 +363,39 @@ internal class WinCore : IDisposable
                     if (((i + 1) < len) && text[i + 1] == '"')
                     {
                         i++;
-                        sb.Append(c); // 連続ダブルクォーテーションは１つのダブルクオーテーションとする
+                        sb.Append(c); // 连续的双引号被视为一个双引号
                         continue;
                     }
                 }
 
-                inEscaped = !inEscaped; // 連続でなければ囲み内か否かの切り替え
+                inEscaped = !inEscaped; // 如果不是连续的，则切换是否在引号内的状态
             }
             else if (c == '\n')
             {
                 if (inEscaped)
                 {
-                    // 囲み内ならパスの一部とする
+                    // 如果在引号内，则视为路径的一部分
                     sb.Append(c);
                 }
                 else
                 {
-                    // 囲み内でなければ、区切りとして、次のパスに移る
+                    // 如果不在引号内，则作为分隔符，移动到下一个路径
                     if (sb.Length > 0)
                     {
                         list.Add(sb.ToString());
-                        //sb.Clear();   // for .NET 4 or later
-                        sb.Length = 0; // for .NET 2
+                        //sb.Clear();   // 适用于.NET 4或更高版本
+                        sb.Length = 0; // 适用于.NET 2
                     }
                 }
             }
             else if (c == '\0')
             {
-                // ヌル文字は、常に区切りとして、次のパスに移る
+                // 空字符始终作为分隔符，移动到下一个路径
                 if (sb.Length > 0)
                 {
                     list.Add(sb.ToString());
-                    //sb.Clear();   // for .NET 4 or later
-                    sb.Length = 0; // for .NET 2
+                    //sb.Clear();   // 适用于.NET 4或更高版本
+                    sb.Length = 0; // 适用于.NET 2
                 }
             }
             else
@@ -408,7 +409,7 @@ internal class WinCore : IDisposable
             list.Add(sb.ToString());
         }
 
-        // 空文字列の要素は除去
+        // 移除所有空字符串元素
         list.RemoveAll(v => v.Length == 0);
         return list.ToArray();
     }
@@ -418,26 +419,26 @@ internal class WinCore : IDisposable
     #region Find, attach or detach
 
     /// <summary>
-    /// ウィンドウ状態を最初に戻して操作対象から解除
+    /// 将窗口状态重置为初始状态并从操作目标中解除。
     /// </summary>
     public void DetachWindow()
     {
 #if UNITY_EDITOR
-        // エディタの場合、ウィンドウスタイルでは常に最前面と得られていない可能性があるため、
-        //  最前面ではないのが本来と決め打ちで、デタッチ時無効化する
+        // 在编辑器中，窗口样式可能不会总是保持在最前，因此默认情况下不处于最前，
+        // 在解除关联时将其禁用。
         EnableTopmost(false);
 #endif
         LibUniWinC.DetachWindow();
     }
 
     /// <summary>
-    /// 自分のウィンドウ（ゲームビューが独立ウィンドウならそれ）を探して操作対象とする
+    /// 寻找自己的窗口（如果游戏视图是独立窗口，则寻找它）并将其作为操作目标。
     /// </summary>
-    /// <returns></returns>
+    /// <returns>是否成功找到并关联窗口。</returns>
     public bool AttachMyWindow()
     {
 #if UNITY_EDITOR_WIN
-        // 確実にゲームビューを得る方法がなさそうなので、フォーカスを与えて直後にアクティブなウィンドウを取得
+        // 由于没有确保获得游戏视图的方法，所以给予焦点并在之后立即获取活动窗口。
         var gameView = GetGameView();
         if (gameView)
         {
@@ -445,9 +446,9 @@ internal class WinCore : IDisposable
             LibUniWinC.AttachMyActiveWindow();
         }
 #else
-            LibUniWinC.AttachMyWindow();
+        LibUniWinC.AttachMyWindow();
 #endif
-        // Add event handlers
+        // 添加事件处理器
         LibUniWinC.RegisterDropFilesCallback(_dropFilesCallback);
         LibUniWinC.RegisterMonitorChangedCallback(_monitorChangedCallback);
         LibUniWinC.RegisterWindowStyleChangedCallback(_windowStyleChangedCallback);
@@ -464,10 +465,10 @@ internal class WinCore : IDisposable
     }
 
     /// <summary>
-    /// 自分のプロセスで現在アクティブなウィンドウを選択
-    /// エディタの場合、ウィンドウが閉じたりドッキングしたりするため、フォーカス時に呼ぶ
+    /// 选择当前进程中活动的窗口。
+    /// 在编辑器中，由于窗口可能会关闭或停靠，因此在获得焦点时调用此方法。
     /// </summary>
-    /// <returns></returns>
+    /// <returns>是否成功选择活动窗口。</returns>
     public bool AttachMyActiveWindow()
     {
         LibUniWinC.AttachMyActiveWindow();
@@ -480,14 +481,14 @@ internal class WinCore : IDisposable
     #region About window status
 
     /// <summary>
-    /// Call this periodically to maintain window style
+    /// 定期调用此方法以维护窗口样式。
     /// </summary>
     public void Update()
     {
         LibUniWinC.Update();
     }
 
-    string GetDebubgWindowSizeInfo()
+    string GetDebugWindowSizeInfo()
     {
         float x, y, cx, cy;
         LibUniWinC.GetSize(out x, out y);
@@ -496,69 +497,69 @@ internal class WinCore : IDisposable
     }
 
     /// <summary>
-    /// 透過を設定／解除
+    /// 设置/解除透明度。
     /// </summary>
-    /// <param name="isTransparent"></param>
+    /// <param name="isTransparent">是否启用透明度。</param>
     public void EnableTransparent(bool isTransparent)
     {
-        // エディタは透過できなかったり、枠が通常と異なるのでスキップ
+        // 编辑器可能无法实现透明度，或者边框与常规情况不同，因此跳过。
 #if !UNITY_EDITOR
-            LibUniWinC.SetTransparent(isTransparent);
-            LibUniWinC.SetBorderless(isTransparent);
+        LibUniWinC.SetTransparent(isTransparent);
+        LibUniWinC.SetBorderless(isTransparent);
 #endif
         this._isTransparent = isTransparent;
     }
 
     /// <summary>
-    /// Set the window alpha
+    /// 设置窗口的透明度（Alpha值）。
     /// </summary>
-    /// <param name="alpha">0.0 - 1.0</param>
+    /// <param name="alpha">范围0.0 - 1.0。</param>
     public void SetAlphaValue(float alpha)
     {
-        // Windowsのエディタでは、一度半透明にしてしまうと表示が更新されなくなるため無効化。MacならOK
+        // 在Windows编辑器中，一旦设为半透明，显示可能不再更新，因此禁用。在Mac上则可以。
 #if !UNITY_EDITOR_WIN
-            LibUniWinC.SetAlphaValue(alpha);
+        LibUniWinC.SetAlphaValue(alpha);
 #endif
     }
 
     /// <summary>
-    /// Set the window z-order (Topmost or not).
+    /// 设置窗口的Z顺序（是否置于最前）。
     /// </summary>
-    /// <param name="isTopmost">If set to <c>true</c> is top.</param>
+    /// <param name="isTopmost">如果设置为<c>true</c>，则窗口置于最前。</param>
     public void EnableTopmost(bool isTopmost)
     {
         LibUniWinC.SetTopmost(isTopmost);
         this._isTopmost = isTopmost;
-        this._isBottommost = false; // Exclusive
+        this._isBottommost = false; // 排他性
     }
 
     /// <summary>
-    /// Set the window z-order (Bottommost or not).
+    /// 设置窗口的Z顺序（是否置于最后）。
     /// </summary>
-    /// <param name="isBottommost">If set to <c>true</c> is bottom.</param>
+    /// <param name="isBottommost">如果设置为<c>true</c>，则窗口置于最后。</param>
     public void EnableBottommost(bool isBottommost)
     {
         LibUniWinC.SetBottommost(isBottommost);
         this._isBottommost = isBottommost;
-        this._isTopmost = false; // Exclusive
+        this._isTopmost = false; // 排他性
     }
 
     /// <summary>
-    /// クリックスルーを設定／解除
+    /// 设置/解除点击穿透。
     /// </summary>
-    /// <param name="isThrough"></param>
+    /// <param name="isThrough">是否启用点击穿透。</param>
     public void EnableClickThrough(bool isThrough)
     {
-        // エディタでクリックスルーされると操作できなくなる可能性があるため、スキップ
+        // 在编辑器中如果启用了点击穿透，可能会导致无法操作，因此跳过。
 #if !UNITY_EDITOR
-            LibUniWinC.SetClickThrough(isThrough);
+        LibUniWinC.SetClickThrough(isThrough);
 #endif
         this._isClickThrough = isThrough;
     }
 
     /// <summary>
-    /// ウィンドウを最大化（Macではズーム）する
-    /// 最大化された後にサイズ変更がされることもあり、現状、確実には動作しない可能性があります
+    /// 将窗口最大化（在Mac上为缩放）。
+    /// 最大化后可能会发生尺寸更改，在当前状态下，可能无法保证正常工作。
     /// </summary>
     public void SetZoomed(bool isZoomed)
     {
@@ -566,8 +567,8 @@ internal class WinCore : IDisposable
     }
 
     /// <summary>
-    /// ウィンドウが最大化（Macではズーム）されているかを取得
-    /// 最大化された後にサイズ変更がされることもあり、現状、確実には動作しない可能性があります
+    /// 获取窗口是否已被最大化（在Mac上为缩放）。
+    /// 最大化后可能会发生尺寸更改，在当前状态下，可能无法保证正常工作。
     /// </summary>
     public bool GetZoomed()
     {
@@ -575,24 +576,25 @@ internal class WinCore : IDisposable
     }
 
     /// <summary>
-    /// Set the window position.
+    /// 设置窗口的位置。
     /// </summary>
-    /// <param name="position">Position.</param>
+    /// <param name="position">位置。</param>
     public void SetWindowPosition(Vector2 position)
     {
         LibUniWinC.SetPosition(position.x, position.y);
     }
 
     /// <summary>
-    /// Get the window position.
+    /// 获取窗口的位置。
     /// </summary>
-    /// <returns>The position.</returns>
+    /// <returns>位置。</returns>
     public Vector2 GetWindowPosition()
     {
         Vector2 pos = Vector2.zero;
         LibUniWinC.GetPosition(out pos.x, out pos.y);
         return pos;
     }
+
 
     /// <summary>
     /// Set the window size.
@@ -627,14 +629,6 @@ internal class WinCore : IDisposable
 
     #endregion
 
-    #region File opening
-
-    public void SetAllowDrop(bool enabled)
-    {
-        LibUniWinC.SetAllowDrop(enabled);
-    }
-
-    #endregion
 
     #region Event observers
 
@@ -731,9 +725,9 @@ internal class WinCore : IDisposable
     #region for Windows only
 
     /// <summary>
-    /// 透過方法を指定（Windowsのみ対応）
+    /// 指定透明度方法（仅支持Windows）
     /// </summary>
-    /// <param name="type"></param>
+    /// <param name="type">透明类型</param>
     public void SetTransparentType(TransparentType type)
     {
         LibUniWinC.SetTransparentType((Int32)type);
@@ -741,74 +735,72 @@ internal class WinCore : IDisposable
     }
 
     /// <summary>
-    /// 単色透過の場合の透明色を指定（Windowsのみ対応）
+    /// 指定单色透明时的透明颜色（仅支持Windows）
     /// </summary>
-    /// <param name="color"></param>
+    /// <param name="color">颜色</param>
     public void SetKeyColor(Color32 color)
     {
         LibUniWinC.SetKeyColor((UInt32)(color.b * 0x10000 + color.g * 0x100 + color.r));
         _keyColor = color;
     }
 
-    #endregion
-
-    #region About monitors
+    #region 关于显示器
 
     /// <summary>
-    /// Get the monitor index where the window is located
+    /// 获取窗口所在的显示器索引
     /// </summary>
-    /// <returns>Monitor index</returns>
+    /// <returns>显示器索引</returns>
     public int GetCurrentMonitor()
     {
         return LibUniWinC.GetCurrentMonitor();
     }
 
     /// <summary>
-    /// Get the number of connected monitors
+    /// 获取连接的显示器数量
     /// </summary>
-    /// <returns>Count</returns>
+    /// <returns>数量</returns>
     public static int GetMonitorCount()
     {
         return LibUniWinC.GetMonitorCount();
     }
 
     /// <summary>
-    /// Get monitor position and size
+    /// 获取显示器的位置和尺寸
     /// </summary>
-    /// <param name="index"></param>
-    /// <param name="position"></param>
-    /// <param name="size"></param>
-    /// <returns></returns>
+    /// <param name="index">显示器索引</param>
+    /// <param name="position">位置</param>
+    /// <param name="size">尺寸</param>
+    /// <returns>是否成功</returns>
     public static bool GetMonitorRectangle(int index, out Vector2 position, out Vector2 size)
     {
         return LibUniWinC.GetMonitorRectangle(index, out position.x, out position.y, out size.x, out size.y);
     }
 
     /// <summary>
-    /// Fit the window to specified monitor
+    /// 将窗口适配到指定的显示器
     /// </summary>
-    /// <param name="monitorIndex"></param>
-    /// <returns></returns>
+    /// <param name="monitorIndex">显示器索引</param>
+    /// <returns>是否成功</returns>
     public bool FitToMonitor(int monitorIndex)
     {
         float dx, dy, dw, dh;
         if (LibUniWinC.GetMonitorRectangle(monitorIndex, out dx, out dy, out dw, out dh))
         {
-            // 最大化状態なら一度戻す
+            // 如果处于最大化状态，则先恢复原状
             if (LibUniWinC.IsMaximized()) LibUniWinC.SetMaximized(false);
 
-            // 指定モニタ中央座標
+            // 计算指定显示器的中心坐标
             float cx = dx + (dw / 2);
             float cy = dy + (dh / 2);
 
-            // ウィンドウ中央を指定モニタ中央に移動
+            // 将窗口中心移动到指定显示器的中心
             float ww, wh;
             LibUniWinC.GetSize(out ww, out wh);
             float wx = cx - (ww / 2);
             float wy = cy - (wh / 2);
             LibUniWinC.SetPosition(wx, wy);
 
-            // 最大化
+            // 最大化窗口
             LibUniWinC.SetMaximized(true);
 
             //Debug.Log(String.Format("Monitor {4} : {0},{1} - {2},{3}", dx, dy, dw, dh, monitorIndex));
@@ -817,6 +809,9 @@ internal class WinCore : IDisposable
 
         return false;
     }
+
+    #endregion
+
 
     /// <summary>
     /// Print monitor list
@@ -841,17 +836,6 @@ internal class WinCore : IDisposable
         }
 
         Debug.Log(message);
-    }
-
-
-    /// <summary>
-    /// Receive information for debugging
-    /// </summary>
-    /// <returns></returns>
-    [Obsolete]
-    public static int GetDebugInfo()
-    {
-        return LibUniWinC.GetDebugInfo();
     }
 
     #endregion
